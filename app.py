@@ -153,6 +153,9 @@ def create_notification_for_employee(evaluation, status):
     
     db.session.add(notification)
     #db.session.commit()
+@app.route('/')
+def index():
+    return "✅ Flask backend is working on Render!"
 @app.route('/test-db')
 def test_db():
     try:
