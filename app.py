@@ -34,7 +34,9 @@ app.config['SECRET_KEY'] = 'b6d5a2c1e44a5a8f9dc52b0a3e5f2e4b3d56f7cfe7c3a6b5c6c7
 
 # تمكين CORS لدعم الطلبات من الـ frontend
 CORS(app, supports_credentials=True, origins=["https://points-almohtarif.netlify.app"])
-
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
+  
 # إعداد الاتصال بقاعدة البيانات
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:mMrWeYBCubaLDrTbQLXpVPvwrwoEAfrM@switchback.proxy.rlwy.net:46042/railway'
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
