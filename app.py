@@ -164,14 +164,6 @@ def create_notification_for_employee(evaluation, status):
 @app.route('/')
 def test_server():
     return 'Server is running! ✅'
-
-@app.route('/test-db')
-def test_db():
-    try:
-        db.session.execute(text('SELECT 1'))
-        return 'Database connection successful!'
-    except Exception as e:
-        return f'Database connection failed: {str(e)}'
 @app.route('/test-db')
 def test_db():
     try:
