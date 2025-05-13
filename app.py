@@ -15,8 +15,6 @@ from cloudinary.utils import cloudinary_url
 from sqlalchemy import text
 
 
-BOT_TOKEN = '8075279661:AAGNvLIvlzXxIK28OYmD3OtoWDSIwcXtixQ'  # التوكن الذي حصلت عليه
-URL = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
 
 cloudinary.config(
     cloud_name = "dhm1xd1di",  # اسم الـ Cloud الخاص بك
@@ -161,7 +159,10 @@ def create_notification_for_employee(evaluation, status):
     )
     
     db.session.add(notification)
-    #db.session.commit()
+
+
+BOT_TOKEN = '8075279661:AAGNvLIvlzXxIK28OYmD3OtoWDSIwcXtixQ' 
+URL = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
 # دالة لإرسال الرسائل إلى تلغرام
 def send_message(chat_id, text):
     payload = {
