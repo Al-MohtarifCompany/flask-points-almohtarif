@@ -161,8 +161,9 @@ def create_notification_for_employee(evaluation, status):
     db.session.add(notification)
 
 
-BOT_TOKEN = '7717771584:AAESm-rwUEcNTIbntV9UV6Ox0VtCjUhiDPE' 
+BOT_TOKEN = '7717771584:AAESm-rwUEcNTIbntV9UV6Ox0VtCjUhiDPE'  # التوكن الذي حصلت عليه من تلغرام
 URL = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
+
 # دالة لإرسال الرسائل إلى تلغرام
 def send_message(chat_id, text):
     payload = {
@@ -171,7 +172,18 @@ def send_message(chat_id, text):
     }
     response = requests.post(URL, data=payload)
     return response
-@app.route(f'/webhook/{BOT_TOKEN}', methods=['POST'])
+
+# تعيين الـ Webhook عند بدء التشغيل
+def set_webhook():
+    webhook_url = f'https://flask-points-almohtarif.onrender.com/webhook'  # رابط السيرفر الخاص بك
+    set_webhook_url = f'https://api.telegram.org/bot{BOT_TOKEN}/setWebhook?url={webhook_url}'
+    response = requests.get(set_webhook_url)
+    if response.status_code == 200:
+        print('تم تعيين الـ Webhook بنجاح!')
+    else:
+        print(f'حدث خطأ أثناء تعيين الـ Webhook: {response.status_code}')
+
+@app.route('/webhook', methods=['POST'])  # مسار ثابت للـ Webhook
 def telegram_webhook():
     data = request.get_json()
 
@@ -182,7 +194,7 @@ def telegram_webhook():
         # مثال: ترحيب
         text = data['message'].get('text', '')
         if text == '/start':
-            send_message(chat_id, "👋 مرحباً! هذا هو chat_id الخاص بك: " + str(chat_id))
+            send_message(chat_id, f"👋 مرحباً! هذا هو chat_id الخاص بك: {chat_id}")
 
     return '', 200
 @app.route('/')
