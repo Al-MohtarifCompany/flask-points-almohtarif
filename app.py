@@ -220,6 +220,66 @@ def create_notification_for_employee(evaluation, status):
         send_telegram_message(employee.telegram_bot_token, employee.telegram_chat_id, message)
     else:
         print("لا توجد بيانات Telegram كاملة لهذا الموظف.")
+# نقطة نهاية لاستقبال تحديثات التلغرام
+@app.route('/telegram-webhook', methods=['POST'])
+def telegram_webhook():
+    update = request.json
+    
+    # التحقق من وجود رسالة والنص
+    if 'message' in update and 'text' in update['message']:
+        chat_id = update['message']['chat']['id']
+        text = update['message']['text']
+        
+        # معالجة أمر start
+        if text == '/start':
+            # البحث عن الموظف بناءً على chat_id
+            employee = Employee.query.filter_by(telegram_chat_id=str(chat_id)).first()
+            
+            if employee:
+                # إرسال رسالة ترحيبية
+                welcome_message = f"مرحبًا {employee.name}! تم تفعيل الإشعارات بنجاح."
+                send_telegram_message(employee.telegram_bot_token, chat_id, welcome_message)
+                
+                # البحث عن الإشعارات غير المقروءة للموظف وإرسالها
+                unread_notifications = Notification.query.filter_by(employee_id=employee.id, status=False).all()
+                
+                if unread_notifications:
+                    for notification in unread_notifications:
+                        send_telegram_message(employee.telegram_bot_token, chat_id, notification.message)
+                        # تحديث حالة الإشعار إلى مقروء إذا أردت ذلك
+                        # notification.status = True
+                    
+                    # حفظ التغييرات في قاعدة البيانات إذا تم تحديث حالة الإشعار
+                    # db.session.commit()
+                else:
+                    send_telegram_message(employee.telegram_bot_token, chat_id, "لا توجد إشعارات جديدة.")
+    
+    return jsonify({"ok": True})
+
+# دالة لإعداد webhook للبوت
+def setup_telegram_webhook(bot_token, webhook_url):
+    url = f"https://api.telegram.org/bot{bot_token}/setWebhook"
+    data = {"url": webhook_url}
+    response = requests.post(url, json=data)
+    return response.json()
+
+# يمكنك استدعاء هذه الدالة عند بدء تشغيل التطبيق أو من نقطة نهاية مخصصة للإعداد
+@app.route('/setup-webhooks', methods=['GET'])
+def setup_all_webhooks():
+    webhook_base_url = "https://flask-points-almohtarif.onrender.com/telegram-webhook"  # قم بتغييره إلى رابط موقعك
+    
+    # جلب جميع الموظفين الذين لديهم توكن تلغرام
+    employees_with_telegram = Employee.query.filter(
+        Employee.telegram_bot_token.isnot(None),
+        Employee.telegram_bot_token != ''
+    ).all()
+    
+    results = {}
+    for employee in employees_with_telegram:
+        result = setup_telegram_webhook(employee.telegram_bot_token, webhook_base_url)
+        results[employee.id] = result
+    
+    return jsonify(results)
 @app.route('/')
 def test_server():
     return 'Server is running! ✅'
