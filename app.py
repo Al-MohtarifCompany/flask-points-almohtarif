@@ -146,6 +146,60 @@ class EvaluationCriteria(db.Model):
     evaluation_type = db.Column(db.String, nullable=False)
     value = db.Column(db.Integer, nullable=False) # وقت إجراء المشرف
 #دالة للاشعارات للموظف
+
+def send_telegram_message(bot_token, chat_id, message):
+
+    """
+
+    دالة لإرسال رسائل عبر التلغرام باستخدام توكن البوت وID المحادثة
+
+    
+
+    :param bot_token: توكن البوت الخاص بالموظف
+
+    :param chat_id: معرف المحادثة الخاص بالموظف
+
+    :param message: الرسالة المراد إرسالها
+
+    :return: True في حالة النجاح، False في حالة الفشل
+
+    """
+
+    try:
+
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+
+        data = {
+
+            "chat_id": chat_id,
+
+            "text": message,
+
+            "parse_mode": "HTML"  # يمكن استخدام HTML للتنسيق
+
+        }
+
+        response = requests.post(url, data=data)
+
+        
+
+        if response.status_code == 200:
+
+            print(f"تم إرسال الإشعار بنجاح إلى {chat_id}")
+
+            return True
+
+        else:
+
+            print(f"فشل إرسال الإشعار: {response.json()}")
+
+            return False
+
+    except Exception as e:
+
+        print(f"حدث خطأ أثناء إرسال الإشعار: {str(e)}")
+
+        return False
 def create_notification_for_employee(evaluation, status):
     status_text = 'قبول' if evaluation.status == 'مقبول' else 'رفض'
     message = f"تم {status_text} التقييم الخاص بك من قبل المشرف {evaluation.supervisor_name}"
@@ -162,65 +216,10 @@ def create_notification_for_employee(evaluation, status):
     )
     
     db.session.add(notification)
-
-
-BOT_TOKEN = '7717771584:AAESm-rwUEcNTIbntV9UV6Ox0VtCjUhiDPE'  # التوكن الذي حصلت عليه من تلغرام
-URL = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
-
-# دالة لإرسال الرسائل إلى تلغرام
-def send_message(chat_id, text):
-    payload = {
-        'chat_id': chat_id,
-        'text': text
-    }
-    response = requests.post(URL, data=payload)
-    return response
-
-# تعيين الـ Webhook عند بدء التشغيل
-def set_webhook():
-    webhook_url = 'https://flask-points-almohtarif.onrender.com/webhook'  # رابط السيرفر الخاص بك
-    set_webhook_url = f'https://api.telegram.org/bot{BOT_TOKEN}/setWebhook?url={webhook_url}'
-    response = requests.get(set_webhook_url)
-    if response.status_code == 200:
-        print('تم تعيين الـ Webhook بنجاح!')
+    if employee and employee.telegram_chat_id and employee.telegram_bot_token:
+        send_telegram_message(employee.telegram_bot_token, employee.telegram_chat_id, message)
     else:
-        print(f'حدث خطأ أثناء تعيين الـ Webhook: {response.status_code}')
-
-@app.route('/webhook', methods=['POST'])
-def telegram_webhook():
-    try:
-        data = request.get_json()
-        print(f"Received data: {data}")  # طباعة البيانات الواردة
-
-        if 'message' in data:
-            chat_id = data['message']['chat']['id']  # الحصول على chat_id
-            print(f"📩 Chat ID: {chat_id}")  # طباعة chat_id
-
-            # إذا كانت الرسالة هي /start، نقوم بتخزين chat_id في قاعدة البيانات
-            text = data['message'].get('text', '')
-            if text == '/start':
-                print("Command '/start' received.")
-                
-                # البحث عن الموظف باستخدام telegram_chat_id
-                employee = Employee.query.filter_by(telegram_chat_id=chat_id).first()
-                
-                if not employee:
-                    # إذا لم يوجد الموظف في قاعدة البيانات، نقوم بإنشائه
-                    new_employee = Employee(name="Employee " + str(chat_id), telegram_chat_id=chat_id)
-                    db.session.add(new_employee)
-                    db.session.commit()
-
-                send_message(chat_id, f"👋 مرحباً! تم تسجيلك بنجاح.")
-            else:
-                print(f"Received message: {text}")
-        else:
-            print("No 'message' field in the data.")
-
-    except Exception as e:
-        print(f"Error processing the webhook: {e}")
-
-    return '', 200
-
+        print("لا توجد بيانات Telegram كاملة لهذا الموظف.")
 @app.route('/')
 def test_server():
     return 'Server is running! ✅'
