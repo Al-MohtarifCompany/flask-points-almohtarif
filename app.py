@@ -15,7 +15,8 @@ from cloudinary.utils import cloudinary_url
 from sqlalchemy import text
 
 
-
+BOT_TOKEN = '8075279661:AAGNvLIvlzXxIK28OYmD3OtoWDSIwcXtixQ'  # التوكن الذي حصلت عليه
+URL = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
 
 cloudinary.config(
     cloud_name = "dhm1xd1di",  # اسم الـ Cloud الخاص بك
@@ -161,6 +162,14 @@ def create_notification_for_employee(evaluation, status):
     
     db.session.add(notification)
     #db.session.commit()
+# دالة لإرسال الرسائل إلى تلغرام
+def send_message(chat_id, text):
+    payload = {
+        'chat_id': chat_id,
+        'text': text
+    }
+    response = requests.post(URL, data=payload)
+    return response
 @app.route(f'/webhook/{BOT_TOKEN}', methods=['POST'])
 def telegram_webhook():
     data = request.get_json()
