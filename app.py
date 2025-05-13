@@ -161,6 +161,20 @@ def create_notification_for_employee(evaluation, status):
     
     db.session.add(notification)
     #db.session.commit()
+@app.route(f'/webhook/{BOT_TOKEN}', methods=['POST'])
+def telegram_webhook():
+    data = request.get_json()
+
+    if 'message' in data:
+        chat_id = data['message']['chat']['id']
+        print(f"📩 Chat ID: {chat_id}")  # ← هذا هو السطر الذي يطبع chat_id
+
+        # مثال: ترحيب
+        text = data['message'].get('text', '')
+        if text == '/start':
+            send_message(chat_id, "👋 مرحباً! هذا هو chat_id الخاص بك: " + str(chat_id))
+
+    return '', 200
 @app.route('/')
 def test_server():
     return 'Server is running! ✅'
