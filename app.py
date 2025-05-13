@@ -113,7 +113,8 @@ class Employee(db.Model):
     position = db.Column(db.String(20), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     points = db.Column(db.Integer, default=0)  # النقاط الافتراضية تكون 0
-
+    telegram_chat_id = db.Column(db.String(50), unique=True, nullable=True) 
+    telegram_bot_token = db.Column(db.Text, nullable=True)
 
 # تعريف جدول التقييمات في قاعدة البيانات
 class Evaluation(db.Model):
@@ -190,16 +191,26 @@ def telegram_webhook():
     try:
         data = request.get_json()
         print(f"Received data: {data}")  # طباعة البيانات الواردة
-        
+
         if 'message' in data:
-            chat_id = data['message']['chat']['id']
+            chat_id = data['message']['chat']['id']  # الحصول على chat_id
             print(f"📩 Chat ID: {chat_id}")  # طباعة chat_id
 
-            # ترحيب عند إرسال "/start"
+            # إذا كانت الرسالة هي /start، نقوم بتخزين chat_id في قاعدة البيانات
             text = data['message'].get('text', '')
             if text == '/start':
                 print("Command '/start' received.")
-                send_message(chat_id, f"👋 مرحباً! هذا هو chat_id الخاص بك: {chat_id}")
+                
+                # البحث عن الموظف باستخدام telegram_chat_id
+                employee = Employee.query.filter_by(telegram_chat_id=chat_id).first()
+                
+                if not employee:
+                    # إذا لم يوجد الموظف في قاعدة البيانات، نقوم بإنشائه
+                    new_employee = Employee(name="Employee " + str(chat_id), telegram_chat_id=chat_id)
+                    db.session.add(new_employee)
+                    db.session.commit()
+
+                send_message(chat_id, f"👋 مرحباً! تم تسجيلك بنجاح.")
             else:
                 print(f"Received message: {text}")
         else:
