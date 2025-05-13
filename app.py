@@ -175,7 +175,7 @@ def send_message(chat_id, text):
 
 # تعيين الـ Webhook عند بدء التشغيل
 def set_webhook():
-    webhook_url = f'https://flask-points-almohtarif.onrender.com/webhook'  # رابط السيرفر الخاص بك
+    webhook_url = 'https://flask-points-almohtarif.onrender.com/webhook'  # رابط السيرفر الخاص بك
     set_webhook_url = f'https://api.telegram.org/bot{BOT_TOKEN}/setWebhook?url={webhook_url}'
     response = requests.get(set_webhook_url)
     if response.status_code == 200:
@@ -183,20 +183,31 @@ def set_webhook():
     else:
         print(f'حدث خطأ أثناء تعيين الـ Webhook: {response.status_code}')
 
-@app.route('/webhook', methods=['POST'])  # مسار ثابت للـ Webhook
+@app.route('/webhook', methods=['POST'])
 def telegram_webhook():
-    data = request.get_json()
+    try:
+        data = request.get_json()
+        print(f"Received data: {data}")  # طباعة البيانات الواردة
+        
+        if 'message' in data:
+            chat_id = data['message']['chat']['id']
+            print(f"📩 Chat ID: {chat_id}")  # طباعة chat_id
 
-    if 'message' in data:
-        chat_id = data['message']['chat']['id']
-        print(f"📩 Chat ID: {chat_id}")  # ← هذا هو السطر الذي يطبع chat_id
+            # ترحيب عند إرسال "/start"
+            text = data['message'].get('text', '')
+            if text == '/start':
+                print("Command '/start' received.")
+                send_message(chat_id, f"👋 مرحباً! هذا هو chat_id الخاص بك: {chat_id}")
+            else:
+                print(f"Received message: {text}")
+        else:
+            print("No 'message' field in the data.")
 
-        # مثال: ترحيب
-        text = data['message'].get('text', '')
-        if text == '/start':
-            send_message(chat_id, f"👋 مرحباً! هذا هو chat_id الخاص بك: {chat_id}")
+    except Exception as e:
+        print(f"Error processing the webhook: {e}")
 
     return '', 200
+
 @app.route('/')
 def test_server():
     return 'Server is running! ✅'
