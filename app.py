@@ -161,7 +161,7 @@ def create_notification_for_employee(evaluation, status):
     db.session.add(notification)
 
 
-BOT_TOKEN = '8075279661:AAGNvLIvlzXxIK28OYmD3OtoWDSIwcXtixQ' 
+BOT_TOKEN = '7717771584:AAESm-rwUEcNTIbntV9UV6Ox0VtCjUhiDPE' 
 URL = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
 # دالة لإرسال الرسائل إلى تلغرام
 def send_message(chat_id, text):
