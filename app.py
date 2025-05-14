@@ -221,15 +221,7 @@ def create_notification_for_employee(evaluation, status):
         send_telegram_message(TELEGRAM_BOT_TOKEN, employee.telegram_chat_id, message)
     else:
         print("لا توجد بيانات Telegram لهذا الموظف.")
-# نقطة نهاية لاستقبال تحديثات التلغرام
-def remove_webhook(bot_token):
-    url = f"https://api.telegram.org/bot{bot_token}/deleteWebhook"
-    response = requests.get(url)
-    print("استجابة حذف الـ Webhook:", response.json())
-@app.route('/remove-webhook', methods=['GET'])
-def remove_telegram_webhook():
-    result = remove_webhook(TELEGRAM_BOT_TOKEN)
-    return jsonify({"result": "تم حذف الـ Webhook"})
+
 
 
 @app.route('/telegram-webhook', methods=['POST'])
