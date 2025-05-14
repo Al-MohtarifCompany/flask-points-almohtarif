@@ -202,11 +202,16 @@ def send_telegram_message(bot_token, chat_id, message):
         print(f"حدث خطأ أثناء إرسال الإشعار: {str(e)}")
         return False
 def create_notification_for_employee(evaluation, status):
-    status_text = 'قبول' if evaluation.status == 'مقبول' else 'رفض'
-    message = f"تم {status_text} التقييم الخاص بك من قبل المشرف {evaluation.supervisor_name}"
+    if evaluation.status == 'مقبول':
+        status_text = '✅ تم قبول'
+    else:
+        status_text = '❌ تم رفض'
+
+    message = f"{status_text} التقييم الخاص بك من قبل المشرف {evaluation.supervisor_name}"
+    
     employee = Employee.query.filter_by(name=evaluation.employee_name).first()
     supervisor = Employee.query.filter_by(name=evaluation.supervisor_name).first() if evaluation.supervisor_name else None
-    
+
     notification = Notification(
         employee_id=employee.id if employee else None,
         supervisor_id=supervisor.id if supervisor else None,
@@ -217,10 +222,12 @@ def create_notification_for_employee(evaluation, status):
     )
     
     db.session.add(notification)
+    
     if employee and employee.telegram_chat_id:
         send_telegram_message(TELEGRAM_BOT_TOKEN, employee.telegram_chat_id, message)
     else:
         print("لا توجد بيانات Telegram لهذا الموظف.")
+
 
 
 
