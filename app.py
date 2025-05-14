@@ -369,17 +369,13 @@ def get_new_evaluations():
         for eval in evaluations
     ]
     
-    # بعد إنشاء الإشعارات، تحديث قيمة notification_sent إلى True
-    for eval in evaluations:
-        eval.notification_sent = True  # تغيير حالة الإشعار
-
-    db.session.commit()  # تأكيد التحديث في قاعدة البيانات
-    
     # إرسال إشعار للتلغرام إذا وُجدت تقييمات جديدة
     if notifications:
         send_notifications_to_supervisors(notifications)
-
+    
+    # عرض الإشعارات دون تغيير حالة notification_sent في قاعدة البيانات بعد
     return jsonify(notifications)
+
 
 @app.route('/api/accepted-evaluations-points-daily', methods=['GET'])
 def accepted_evaluations_points_daily():
