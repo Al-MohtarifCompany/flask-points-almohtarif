@@ -114,7 +114,6 @@ class Employee(db.Model):
     password = db.Column(db.String(255), nullable=False)
     points = db.Column(db.Integer, default=0)  # النقاط الافتراضية تكون 0
     telegram_chat_id = db.Column(db.String(50), unique=True, nullable=True) 
-    telegram_bot_token = db.Column(db.Text, nullable=True)
 
 # تعريف جدول التقييمات في قاعدة البيانات
 class Evaluation(db.Model):
@@ -145,41 +144,16 @@ class EvaluationCriteria(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     evaluation_type = db.Column(db.String, nullable=False)
     value = db.Column(db.Integer, nullable=False) # وقت إجراء المشرف
+TELEGRAM_BOT_TOKEN = "7717771584:AAESm-rwUEcNTIbntV9UV6Ox0VtCjUhiDPE"
 #دالة للاشعارات للموظف
-
 def send_telegram_message(bot_token, chat_id, message):
-
-    """
-
-    دالة لإرسال رسائل عبر التلغرام باستخدام توكن البوت وID المحادثة
-
-    
-
-    :param bot_token: توكن البوت الخاص بالموظف
-
-    :param chat_id: معرف المحادثة الخاص بالموظف
-
-    :param message: الرسالة المراد إرسالها
-
-    :return: True في حالة النجاح، False في حالة الفشل
-
-    """
-
     try:
 
         url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
 
-        data = {
+        data = {"chat_id": chat_id, "text": text}
 
-            "chat_id": chat_id,
-
-            "text": message,
-
-            "parse_mode": "HTML"  # يمكن استخدام HTML للتنسيق
-
-        }
-
-        response = requests.post(url, data=data)
+        response =  requests.post(url, json=data)
 
         
 
@@ -216,10 +190,10 @@ def create_notification_for_employee(evaluation, status):
     )
     
     db.session.add(notification)
-    if employee and employee.telegram_chat_id and employee.telegram_bot_token:
-        send_telegram_message(employee.telegram_bot_token, employee.telegram_chat_id, message)
+    if employee and employee.telegram_chat_id:
+        send_telegram_message(TELEGRAM_BOT_TOKEN, employee.telegram_chat_id, message)
     else:
-        print("لا توجد بيانات Telegram كاملة لهذا الموظف.")
+        print("لا توجد بيانات Telegram لهذا الموظف.")
 # نقطة نهاية لاستقبال تحديثات التلغرام
 @app.route('/telegram-webhook', methods=['POST'])
 def telegram_webhook():
@@ -276,7 +250,7 @@ def setup_all_webhooks():
     
     results = {}
     for employee in employees_with_telegram:
-        result = setup_telegram_webhook(employee.telegram_bot_token, webhook_base_url)
+        result = setup_telegram_webhook(TELEGRAM_BOT_TOKEN, webhook_base_url)
         results[employee.id] = result
     
     return jsonify(results)
