@@ -318,7 +318,7 @@ def mark_notification_as_read(notification_id):
         db.session.rollback()
         return jsonify({"message": f"حدث خطأ: {str(e)}"}), 500
 
-
+sent_notifications = {}
 @app.route('/api/new-evaluations', methods=['GET'])
 def get_new_evaluations():
     # استرجاع التقييمات التي هي قيد المراجعة فقط
@@ -345,21 +345,26 @@ def get_new_evaluations():
 
         TELEGRAM_BOT_TOKEN = "7717771584:AAESm-rwUEcNTIbntV9UV6Ox0VtCjUhiDPE"
 
-        # أرسل إشعار لكل مشرف عن كل تقييم جديد
         for notif in notifications:
-            message = f"📝 تقييم جديد من {notif['employee_name']}"
-            for supervisor in supervisors:
-                try:
-                    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-                    data = {"chat_id": supervisor.telegram_chat_id, "text": message}
-                    response = requests.post(url, json=data)
+            # تأكد من أنه لم يتم إرسال إشعار لهذا التقييم
+            if notif['evaluation_id'] not in sent_notifications:
+                message = f"📝 تقييم جديد من {notif['employee_name']}"
+                
+                for supervisor in supervisors:
+                    try:
+                        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                        data = {"chat_id": supervisor.telegram_chat_id, "text": message}
+                        response = requests.post(url, json=data)
 
-                    if response.status_code == 200:
-                        print(f"✅ تم إرسال إشعار إلى المشرف {supervisor.name}")
-                    else:
-                        print(f"❌ فشل إرسال الإشعار للمشرف {supervisor.name}: {response.text}")
-                except Exception as e:
-                    print(f"⚠️ خطأ أثناء إرسال الإشعار للمشرف {supervisor.name}: {str(e)}")
+                        if response.status_code == 200:
+                            print(f"✅ تم إرسال إشعار إلى {supervisor.name}")
+                        else:
+                            print(f"❌ فشل الإرسال إلى {supervisor.name}: {response.text}")
+                    except Exception as e:
+                        print(f"⚠️ خطأ: {str(e)}")
+
+                # حفظ المعرف في الذاكرة المؤقتة (لتجنب إرسال نفس الإشعار مجددًا)
+                sent_notifications[notif['evaluation_id']] = time.time()
 
     return jsonify(notifications)
 
