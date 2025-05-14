@@ -367,7 +367,10 @@ def get_new_evaluations():
             "created_at": eval.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             "notification_sent": eval.notification_sent  # تضمين حالة الإشعار
         }
-        for eval in evaluations
+         # بعد إرسال الإشعار، تحديث قيمة notification_sent إلى True
+        for eval in evaluations:
+            eval.notification_sent = True  # تغيير حالة الإشعار
+        db.session.commit()  # تأكيد التحديث في قاعدة البيانات
     ]
     
     # إرسال إشعار للتلغرام إذا وُجدت تقييمات جديدة
