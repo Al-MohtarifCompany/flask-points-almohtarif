@@ -332,6 +332,35 @@ def get_new_evaluations():
         }
         for eval in evaluations
     ]
+        # إرسال إشعار للتلغرام إذا وُجدت تقييمات جديدة
+    if notifications:
+        import requests
+
+        # استرجاع جميع المشرفين الذين لديهم chat_id
+        supervisors = Employee.query.filter(
+            Employee.position == 'مشرف',
+            Employee.telegram_chat_id.isnot(None),
+            Employee.telegram_chat_id != ''
+        ).all()
+
+        TELEGRAM_BOT_TOKEN = "7717771584:AAESm-rwUEcNTIbntV9UV6Ox0VtCjUhiDPE"
+
+        # أرسل إشعار لكل مشرف عن كل تقييم جديد
+        for notif in notifications:
+            message = f"📝 تقييم جديد من {notif['employee_name']}"
+            for supervisor in supervisors:
+                try:
+                    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                    data = {"chat_id": supervisor.telegram_chat_id, "text": message}
+                    response = requests.post(url, json=data)
+
+                    if response.status_code == 200:
+                        print(f"✅ تم إرسال إشعار إلى المشرف {supervisor.name}")
+                    else:
+                        print(f"❌ فشل إرسال الإشعار للمشرف {supervisor.name}: {response.text}")
+                except Exception as e:
+                    print(f"⚠️ خطأ أثناء إرسال الإشعار للمشرف {supervisor.name}: {str(e)}")
+
     return jsonify(notifications)
 
 @app.route('/api/accepted-evaluations-points-daily', methods=['GET'])
