@@ -146,39 +146,28 @@ class EvaluationCriteria(db.Model):
     value = db.Column(db.Integer, nullable=False) # وقت إجراء المشرف
 TELEGRAM_BOT_TOKEN = "7717771584:AAESm-rwUEcNTIbntV9UV6Ox0VtCjUhiDPE"
 # تابع لإرسال الإشعارات للمشرفين
-def send_notifications_to_supervisors(notifications):
-    # استرجاع جميع المشرفين الذين لديهم chat_id
+def send_notifications_to_supervisors(evaluations):
     supervisors = Employee.query.filter(
         Employee.position == 'مشرف',
         Employee.telegram_chat_id.isnot(None),
         Employee.telegram_chat_id != ''
     ).all()
 
-    TELEGRAM_BOT_TOKEN = "7717771584:AAESm-rwUEcNTIbntV9UV6Ox0VtCjUhiDPE"
+    TELEGRAM_BOT_TOKEN = "..."
+    for eval in evaluations:
+        message = f"📝 تقييم جديد من {eval.employee_name}"
+        for supervisor in supervisors:
+            try:
+                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                data = {"chat_id": supervisor.telegram_chat_id, "text": message}
+                response = requests.post(url, json=data)
+            except Exception as e:
+                print(f"⚠️ خطأ: {str(e)}")
 
-    for notif in notifications:
-        # تحقق إذا تم إرسال الإشعار لهذا التقييم أم لا
-        if not notif['notification_sent']:
-            message = f"📝 تقييم جديد من {notif['employee_name']}"
+        # تحديث بعد الإرسال
+        eval.notification_sent = True
 
-            for supervisor in supervisors:
-                try:
-                    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-                    data = {"chat_id": supervisor.telegram_chat_id, "text": message}
-                    response = requests.post(url, json=data)
-
-                    if response.status_code == 200:
-                        print(f"✅ تم إرسال إشعار إلى {supervisor.name}")
-                    else:
-                        print(f"❌ فشل الإرسال إلى {supervisor.name}: {response.text}")
-                except Exception as e:
-                    print(f"⚠️ خطأ: {str(e)}")
-
-            # تحديث حالة الإشعار في قاعدة البيانات بعد الإرسال
-            evaluation = Evaluation.query.get(notif['evaluation_id'])
-            if evaluation:
-                evaluation.notification_sent = True
-                db.session.commit()  # تأكيد التحديث في قاعدة البيانات
+    db.session.commit()
 
 #دالة للاشعارات للموظف
 def send_telegram_message(bot_token, chat_id, message):
@@ -355,26 +344,26 @@ def mark_notification_as_read(notification_id):
 
 @app.route('/api/new-evaluations', methods=['GET'])
 def get_new_evaluations():
-    # استرجاع التقييمات التي هي قيد المراجعة ولم يتم إرسال إشعار لها بعد
-    evaluations = Evaluation.query.filter(Evaluation.status == 'قيد المراجعة', Evaluation.notification_sent == False).all()
-    
-    # تحويل التقييمات إلى قائمة من القيم التي تحتاجها الإشعارات
+    # استرجاع التقييمات التي هي قيد المراجعة فقط (حتى لو تم إرسال إشعار تيليجرام)
+    evaluations = Evaluation.query.filter(Evaluation.status == 'قيد المراجعة').all()
+
+    # تجهيز الإشعارات للواجهة الأمامية
     notifications = [
         {
             "employee_name": eval.employee_name,
             "evaluation_id": eval.id,
             "created_at": eval.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            "notification_sent": eval.notification_sent  # تضمين حالة الإشعار
         }
         for eval in evaluations
     ]
-    
-    # إرسال إشعار للتلغرام إذا وُجدت تقييمات جديدة
-    if notifications:
-        send_notifications_to_supervisors(notifications)
-    
-    # عرض الإشعارات دون تغيير حالة notification_sent في قاعدة البيانات بعد
+
+    # فقط أرسل إشعارات تيليجرام للتقييمات التي لم تُرسل بعد
+    unsent = [eval for eval in evaluations if not eval.notification_sent]
+    if unsent:
+        send_notifications_to_supervisors(unsent)
+
     return jsonify(notifications)
+
 
 
 @app.route('/api/accepted-evaluations-points-daily', methods=['GET'])
