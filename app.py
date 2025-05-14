@@ -153,14 +153,23 @@ def send_notifications_to_supervisors(evaluations):
         Employee.telegram_chat_id != ''
     ).all()
 
-    TELEGRAM_BOT_TOKEN = "..."
+    TELEGRAM_BOT_TOKEN = "7717771584:AAESm-rwUEcNTIbntV9UV6Ox0VtCjUhiDPE"
     for eval in evaluations:
         message = f"📝 تقييم جديد من {eval.employee_name}"
         for supervisor in supervisors:
+            # تحقق من صحة chat_id قبل الإرسال
+            if not supervisor.telegram_chat_id or supervisor.telegram_chat_id.strip() == "":
+                print(f"chat_id غير صالح للمشرف: {supervisor.name}")
+                continue
+                
             try:
                 url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
                 data = {"chat_id": supervisor.telegram_chat_id, "text": message}
                 response = requests.post(url, json=data)
+                response_json = response.json()
+                
+                if not response_json.get('ok'):
+                    print(f"خطأ في إرسال الإشعار للمشرف {supervisor.name}: {response_json}")
             except Exception as e:
                 print(f"⚠️ خطأ: {str(e)}")
 
@@ -172,31 +181,25 @@ def send_notifications_to_supervisors(evaluations):
 #دالة للاشعارات للموظف
 def send_telegram_message(bot_token, chat_id, message):
     try:
-
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-
-        data = {"chat_id": chat_id, "text": message}
-
-        response =  requests.post(url, json=data)
-
+        # تسجيل معلومات للتصحيح
+        print(f"محاولة إرسال إلى chat_id: {chat_id}, نوع: {type(chat_id)}")
         
-
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        data = {"chat_id": chat_id, "text": message}
+        
+        response = requests.post(url, json=data)
+        response_json = response.json()
+        
+        print(f"استجابة التلغرام: {response_json}")
+        
         if response.status_code == 200:
-
             print(f"تم إرسال الإشعار بنجاح إلى {chat_id}")
-
             return True
-
         else:
-
-            print(f"فشل إرسال الإشعار: {response.json()}")
-
+            print(f"فشل إرسال الإشعار: {response_json}")
             return False
-
     except Exception as e:
-
         print(f"حدث خطأ أثناء إرسال الإشعار: {str(e)}")
-
         return False
 def create_notification_for_employee(evaluation, status):
     status_text = 'قبول' if evaluation.status == 'مقبول' else 'رفض'
