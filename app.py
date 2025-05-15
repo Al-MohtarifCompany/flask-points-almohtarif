@@ -113,7 +113,7 @@ class Employee(db.Model):
     position = db.Column(db.String(20), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     points = db.Column(db.Integer, default=0)  # النقاط الافتراضية تكون 0
-    telegram_chat_id = db.Column(db.String(50), unique=True, nullable=True) 
+    telegram_chat_id = db.Column(db.String(50), nullable=True) 
 
 # تعريف جدول التقييمات في قاعدة البيانات
 class Evaluation(db.Model):
