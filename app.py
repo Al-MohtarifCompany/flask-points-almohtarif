@@ -1121,13 +1121,6 @@ def add_employee():
 
         position = data.get("position")
         telegram_chat_id = data.get("telegram_chat_id") if position == "موظف" else None
-
-        # تحقق من تكرار التلغرام شات آي دي إذا كان موجود
-        if telegram_chat_id:
-            existing = Employee.query.filter_by(telegram_chat_id=telegram_chat_id).first()
-            if existing:
-                return jsonify({"error": "معرّف التلغرام مستخدم مسبقًا"}), 409
-
         new_employee = Employee(
             name=data["name"],
             email=data["email"],
@@ -1144,6 +1137,7 @@ def add_employee():
         db.session.rollback()
         print(f"خطأ في إضافة موظف: {str(e)}")
         return jsonify({"error": f"فشل الإضافة: {str(e)}"}), 500
+
 
 
 @app.route("/api/update-employees/<int:id>", methods=["PUT"])
@@ -1167,12 +1161,9 @@ def update_employee(id):
             employee.password = data["password"]
 
         if employee.position == "موظف":
+            # فقط حدّث القيمة دون التحقق من التكرار
             new_chat_id = data.get("telegram_chat_id")
             if new_chat_id:
-                # تحقق من عدم استخدامه من قبل موظف آخر
-                existing = Employee.query.filter_by(telegram_chat_id=new_chat_id).first()
-                if existing and existing.id != employee.id:
-                    return jsonify({"error": "معرّف التلغرام مستخدم من موظف آخر"}), 409
                 employee.telegram_chat_id = new_chat_id
 
         db.session.commit()
@@ -1181,6 +1172,7 @@ def update_employee(id):
         db.session.rollback()
         print(f"خطأ في التحديث: {str(e)}")
         return jsonify({"error": f"فشل التحديث: {str(e)}"}), 500
+
 
 
 # حذف موظف
