@@ -1118,49 +1118,70 @@ def add_employee():
         data = request.get_json()
         if not data:
             return jsonify({"error": "لم يتم استلام بيانات"}), 400
-            
+
+        position = data.get("position")
+        telegram_chat_id = data.get("telegram_chat_id") if position == "موظف" else None
+
+        # تحقق من تكرار التلغرام شات آي دي إذا كان موجود
+        if telegram_chat_id:
+            existing = Employee.query.filter_by(telegram_chat_id=telegram_chat_id).first()
+            if existing:
+                return jsonify({"error": "معرّف التلغرام مستخدم مسبقًا"}), 409
+
         new_employee = Employee(
             name=data["name"],
             email=data["email"],
-            position=data["position"],
+            position=position,
             department=data["department"],
-            password=data["password"]  # لا تشفير
+            password=data["password"],
+            telegram_chat_id=telegram_chat_id
         )
+
         db.session.add(new_employee)
         db.session.commit()
-        # إعادة المعرف الجديد للموظف المضاف
         return jsonify({"message": "تمت الإضافة بنجاح", "id": new_employee.id})
     except Exception as e:
         db.session.rollback()
         print(f"خطأ في إضافة موظف: {str(e)}")
         return jsonify({"error": f"فشل الإضافة: {str(e)}"}), 500
 
-# تعديل بيانات موظف
+
 @app.route("/api/update-employees/<int:id>", methods=["PUT"])
 def update_employee(id):
     try:
         data = request.get_json()
         if not data:
             return jsonify({"error": "لم يتم استلام بيانات"}), 400
-           
+
         employee = Employee.query.get(id)
         if not employee:
             return jsonify({"error": f"الموظف برقم {id} غير موجود"}), 404
-           
+
         # تحديث البيانات
         employee.name = data.get("name", employee.name)
         employee.email = data.get("email", employee.email)
         employee.position = data.get("position", employee.position)
         employee.department = data.get("department", employee.department)
+
         if "password" in data and data["password"]:
             employee.password = data["password"]
-       
+
+        if employee.position == "موظف":
+            new_chat_id = data.get("telegram_chat_id")
+            if new_chat_id and new_chat_id != employee.telegram_chat_id:
+                # تحقق من عدم استخدامه من قبل موظف آخر
+                existing = Employee.query.filter_by(telegram_chat_id=new_chat_id).first()
+                if existing and existing.id != employee.id:
+                    return jsonify({"error": "معرّف التلغرام مستخدم من موظف آخر"}), 409
+                employee.telegram_chat_id = new_chat_id
+
         db.session.commit()
         return jsonify({"message": "تم التحديث بنجاح", "employee_id": id})
     except Exception as e:
         db.session.rollback()
         print(f"خطأ في التحديث: {str(e)}")
         return jsonify({"error": f"فشل التحديث: {str(e)}"}), 500
+
 
 # حذف موظف
 @app.route("/api/delete-employees/<int:id>", methods=["DELETE"])
