@@ -1212,7 +1212,8 @@ def get_employees():
                 "email": emp.email,
                 "position": emp.position,
                 "department": emp.department,
-                "password": emp.password
+                "password": emp.password,
+                "telegram_chat_id": emp.telegram_chat_id  # ✅ أضف هذا السطر
             })
         return jsonify(result)
     except Exception as e:
