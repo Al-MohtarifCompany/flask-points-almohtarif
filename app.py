@@ -45,7 +45,7 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True
 
 # إعداد الاتصال بقاعدة البيانات
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:mMrWeYBCubaLDrTbQLXpVPvwrwoEAfrM@switchback.proxy.rlwy.net:46042/railway'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:bBemMwVCIMeKLWgVOoJxVVGQcgdejSbx@caboose.proxy.rlwy.net:59827/railway'
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_size': 10,
     'pool_recycle': 3600,
