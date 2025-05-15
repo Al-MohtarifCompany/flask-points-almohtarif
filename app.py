@@ -1168,7 +1168,7 @@ def update_employee(id):
 
         if employee.position == "موظف":
             new_chat_id = data.get("telegram_chat_id")
-            if new_chat_id and new_chat_id != employee.telegram_chat_id:
+            if new_chat_id:
                 # تحقق من عدم استخدامه من قبل موظف آخر
                 existing = Employee.query.filter_by(telegram_chat_id=new_chat_id).first()
                 if existing and existing.id != employee.id:
