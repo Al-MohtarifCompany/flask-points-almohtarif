@@ -356,7 +356,7 @@ def mark_notification_as_read(notification_id):
 
 @app.route('/api/new-evaluations', methods=['GET'])
 def get_new_evaluations():
-    # استرجاع التقييمات التي هي قيد المراجعة فقط (حتى لو تم إرسال إشعار تيليجرام)
+    # استرجاع التقييمات التي هي قيد المراجعة فقط
     evaluations = Evaluation.query.filter(Evaluation.status == 'قيد المراجعة').all()
 
     # تجهيز الإشعارات للواجهة الأمامية
@@ -369,12 +369,14 @@ def get_new_evaluations():
         for eval in evaluations
     ]
 
-    # فقط أرسل إشعارات تيليجرام للتقييمات التي لم تُرسل بعد
-    unsent = [eval for eval in evaluations if not eval.notification_sent]
-    if unsent:
-        send_notifications_to_supervisors(unsent)
+    # تم حذف إرسال إشعارات تيليجرام
+    # إذا أردت إعادة الإشعارات لاحقاً، يمكنك إلغاء التعليق عن السطرين التاليين:
+    # unsent = [eval for eval in evaluations if not eval.notification_sent]
+    # if unsent:
+    #     send_notifications_to_supervisors(unsent)
 
     return jsonify(notifications)
+
 
 
 
@@ -1655,12 +1657,21 @@ def submit_evaluation():
             status='قيد المراجعة',
             supervisor_note="",
             supervisor_name=None,
-            supervisor_action_time=None
+            supervisor_action_time=None,
+            notification_sent=False
         )
 
         db.session.add(evaluation)
         db.session.commit()
+        
+        try:
+            send_notifications_to_supervisors([evaluation])
+            evaluation.notification_sent = True
+            db.session.commit()
+        except Exception as e:
+            print(f"Telegram notification failed: {e}")
 
+        # ✅ هنا تضع السطر الذي نقصته
         return jsonify({"message": "Evaluation submitted successfully!"}), 200
     except Exception as e:
         print(f"Error occurred: {str(e)}")  # سيتم طباعة تفاصيل الخطأ
