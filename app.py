@@ -45,7 +45,7 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True
 
 # إعداد الاتصال بقاعدة البيانات
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.kuaymgsqhnzbmmrgyuau:123456@aws-0-eu-central-1.pooler.supabase.com:5432/postgres'
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://points:W0zYfmOvmZTGVp2GBsXEWRSzd5c7i37B@dpg-d186jpndiees73apdigg-a.frankfurt-postgres.render.com/points_tcm3"
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_size': 10,
     'pool_recycle': 3600,
