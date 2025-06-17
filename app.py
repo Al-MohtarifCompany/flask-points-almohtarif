@@ -45,7 +45,7 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True
 
 # إعداد الاتصال بقاعدة البيانات
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://points:W0zYfmOvmZTGVp2GBsXEWRSzd5c7i37B@dpg-d186jpndiees73apdigg-a.frankfurt-postgres.render.com/points_tcm3"
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://almohtarif_company:%23X2f%407qu%23TzvR%21p9mWEbG%24yJ4KPcL%5EoAFh6dNMT%268ZjUs%2AeB3xCYgV0RaiQ1SnXtw@localhost:3306/almohtarif_company_db_2"
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_size': 10,
     'pool_recycle': 3600,
